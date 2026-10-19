@@ -89,6 +89,10 @@ export class Bubble {
         this._i = 0;
     }
 
+    get displayed() {
+        return this._displayed; 
+    }
+
     nextChar() {
         if (!this._canvas_context) throw new Error();
 
@@ -118,9 +122,5 @@ export class Bubble {
             this._displayed = this._i / TEXT_SPEED === this._text.length;
             this._i += 1;
 	    }
-    }
-
-    get displayed() {
-        return this._displayed; 
     }
 }
