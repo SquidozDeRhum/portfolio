@@ -4,6 +4,10 @@ const SPRITE_FILE_NAME = "bubble.png";
 const MAX_CHAR_PER_LINE = 18;
 const TEXT_SPEED = 4;
 
+const TEXT_BASELINE = "top";
+const FONT = "20px NFPixels";
+const FILL_STYLE = "black";
+
 export class Bubble {
     private _text: string;
     private _lines: string[];
@@ -46,11 +50,12 @@ export class Bubble {
 
         if (!this._canvas_context) throw new Error();
 
-        this._canvas_context.textBaseline = 'top';
-        this._canvas_context.font = '20px NFPixels';
-        this._canvas_context.fillStyle = 'black';
+        this._canvas_context.textBaseline = TEXT_BASELINE;
+        this._canvas_context.font = FONT;
+        this._canvas_context.fillStyle = FILL_STYLE;
         
         this._text_texture = new THREE.CanvasTexture(this._canvas);
+        this._text_texture.magFilter = THREE.NearestFilter;
         
         this._text_sprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: this._text_texture,

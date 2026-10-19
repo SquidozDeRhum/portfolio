@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 const FRAME_NB = 3;
-const ANIMATION_SPEED = 6;
+const ANIMATION_SPEED = 20;
 const SPRITE_FILE_NAME = "jussemence";
 const SPRITE_FILE_EXTENSION = ".png";
 
