@@ -32,7 +32,7 @@ export class Jussemence extends Actor {
         scene.add(this._sprite);
     }
 
-    get position() {
+    get position(): THREE.Vector3 {
         return this._sprite.position;
     }
 

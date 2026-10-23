@@ -21,6 +21,7 @@ export class WorldHandler {
     private _ambient_light: THREE.AmbientLight;
     private _texture_loader: THREE.TextureLoader;
 
+    private _jussemence: Jussemence;
     private _actors: Actor[];
 
     private _frame_context: FrameContext;
@@ -39,15 +40,18 @@ export class WorldHandler {
         this._scene.add(this._ambient_light);
         
         this._texture_loader = new THREE.TextureLoader();
-
-        this._actors = [];
-
+        
+        this._jussemence = new Jussemence(this._scene, this._texture_loader);
+        this._actors = [
+            this._jussemence,
+            new Bubble("Bienvenue sur mon portfolio !", this._scene, this._texture_loader)
+        ];
+        
         this._frame_context = {
-            bubble_displayed: false
-        }
-
-        this._actors.push(new Jussemence(this._scene, this._texture_loader));
-        this._actors.push(new Bubble("HDQSFUOIDHUIQOSD UIFHDUIFDSH  UIFDSHUIFSD", this._scene, this._texture_loader));
+            bubble_displayed: false,
+            camera_rotation: new THREE.Euler,
+            jussemence_position: new THREE.Vector3()
+        };
 
         // test field
 
@@ -72,6 +76,9 @@ export class WorldHandler {
     }
 
     handle_world() {
+        this._frame_context.camera_rotation = this._camera.rotation;
+        this._frame_context.jussemence_position = this._jussemence.position;
+
         this._actors.forEach((a) => a.next_frame(this._frame_context));
 
         this._camera.next_frame();
