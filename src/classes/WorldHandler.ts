@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { Jussemence } from './Juice';
 import { Bubble } from './Bubble';
 import { Camera } from './Camera';
+import type { Actor } from './Actor';
+import type { FrameContext } from '../interfaces';
 
 const BACKGROUND_COLOR = 0x87CEEB;
 
@@ -18,8 +20,10 @@ export class WorldHandler {
     private _camera: Camera;
     private _ambient_light: THREE.AmbientLight;
     private _texture_loader: THREE.TextureLoader;
-    private _jussemence: Jussemence;
-    private _bubble: Bubble;
+
+    private _actors: Actor[];
+
+    private _frame_context: FrameContext;
 
     constructor() {
         this._scene = new THREE.Scene();
@@ -36,9 +40,14 @@ export class WorldHandler {
         
         this._texture_loader = new THREE.TextureLoader();
 
-        this._jussemence = new Jussemence(this._scene, this._texture_loader);
+        this._actors = [];
 
-        this._bubble = new Bubble("HDQSFUOIDHUIQOSD UIFHDUIFDSH  UIFDSHUIFSD ", this._scene, this._texture_loader);
+        this._frame_context = {
+            bubble_displayed: false
+        }
+
+        this._actors.push(new Jussemence(this._scene, this._texture_loader));
+        this._actors.push(new Bubble("HDQSFUOIDHUIQOSD UIFHDUIFDSH  UIFDSHUIFSD", this._scene, this._texture_loader));
 
         // test field
 
@@ -62,12 +71,10 @@ export class WorldHandler {
         return this._renderer;
     }
 
-    handleWorld() {
-        this._jussemence.nextFrame(this._bubble.displayed);
+    handle_world() {
+        this._actors.forEach((a) => a.next_frame(this._frame_context));
 
-        this._bubble.nextChar();
-
-        this._camera.checkMovement();
+        this._camera.next_frame();
 
         this._renderer.render(this._scene, this._camera.camera);
     }

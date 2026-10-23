@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Actor } from './Actor';
 
 const FOV = 75;
 const NEAR = 0.1;
@@ -18,11 +19,13 @@ export interface Keys {
     ArrowRight: boolean;
 };
 
-export class Camera {
+export class Camera extends Actor {
     private _camera: THREE.PerspectiveCamera;
     private _keys: Keys;
 
     constructor() {
+        super();
+
         this._camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR, FAR);
         this._camera.position.z = 5;
 
@@ -56,18 +59,30 @@ export class Camera {
         return this._camera;
     }
 
+    get position() {
+        return this._camera.position;
+    }
+
+    get rotation() {
+        return this._camera.rotation;
+    }
+
     // this works, for pity’s sake, so I never have to touch it again
-    checkMovement() {
+    check_movement() {
         const z = (this._keys.z ? -1 : 0) + (this._keys.s ? 1 : 0);
         const x = (this._keys.q ? -1 : 0) + (this._keys.d ? 1 : 0);
 
-        const x_rotation = (this._keys.ArrowUp ? 1 : 0) + (this._keys.ArrowDown ? -1 : 0)
+        // const x_rotation = (this._keys.ArrowUp ? 1 : 0) + (this._keys.ArrowDown ? -1 : 0)
         const y_rotation = (this._keys.ArrowLeft ? 1 : 0) + (this._keys.ArrowRight ? -1 : 0)
 
         this._camera.position.z += (z * Math.cos(this._camera.rotation.y) + x * Math.cos(this._camera.rotation.y + (Math.PI / 2))) * MOVEMENT_SPEED;
         this._camera.position.x += (z * Math.sin(this._camera.rotation.y) + x * Math.sin(this._camera.rotation.y + (Math.PI / 2))) * MOVEMENT_SPEED;
 
-        this._camera.rotation.x += x_rotation * ROTATION_SPEED;
+        // this._camera.rotation.x += x_rotation * ROTATION_SPEED;
         this._camera.rotation.y += y_rotation * ROTATION_SPEED;
+    }
+
+    next_frame() {
+        this.check_movement();
     }
 }

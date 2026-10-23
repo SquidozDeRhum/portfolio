@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { Actor } from './Actor';
+import type { FrameContext } from '../interfaces';
 
 const SPRITE_FILE_NAME = "bubble.png";
 const MAX_CHAR_PER_LINE = 18;
@@ -8,10 +10,9 @@ const TEXT_BASELINE = "top";
 const FONT = "20px NFPixels";
 const FILL_STYLE = "black";
 
-export class Bubble {
+export class Bubble extends Actor {
     private _text: string;
     private _lines: string[];
-    private _displayed: boolean;
     private _x: number;
     private _y: number;
     private _i: number;
@@ -26,6 +27,8 @@ export class Bubble {
     private _text_sprite: THREE.Sprite<THREE.Object3DEventMap>; 
 
     constructor(text: string, scene: THREE.Scene<THREE.Object3DEventMap>, texture_loader: THREE.TextureLoader) {
+        super();
+
         this._text = text;
 
         this._texture = texture_loader.load(SPRITE_FILE_NAME);
@@ -83,20 +86,16 @@ export class Bubble {
             }
         }
 
-        this._displayed = false;
         this._x = 10;
         this._y = 20;
         this._i = 0;
     }
 
-    get displayed() {
-        return this._displayed; 
-    }
 
-    nextChar() {
+    next_char(frame_context: FrameContext) {
         if (!this._canvas_context) throw new Error();
 
-        if (!this._displayed) {
+        if (!frame_context.bubble_displayed) {
             if (this._i % TEXT_SPEED === 0) {
                 this._canvas_context.clearRect(0, 0, this._canvas.width, this._canvas.height);
                 let nb_chars = this._i / TEXT_SPEED;
@@ -119,8 +118,13 @@ export class Bubble {
                 this._text_texture.needsUpdate = true;
             }
             
-            this._displayed = this._i / TEXT_SPEED === this._text.length;
+            frame_context.bubble_displayed = this._i / TEXT_SPEED === this._text.length;
+
             this._i += 1;
 	    }
+    }
+
+    next_frame(frame_context: FrameContext) {
+        this.next_char(frame_context);
     }
 }
