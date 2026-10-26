@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Actor } from './Actor';
+import { round_number_to_two_decimals } from '../utils';
 
 const FOV = 75;
 const NEAR = 0.1;
@@ -17,11 +18,23 @@ export interface Keys {
     ArrowDown: boolean;
     ArrowLeft: boolean;
     ArrowRight: boolean;
+    Enter: boolean;
+    ' ': boolean;
 };
+
+interface Position {
+    x: number;
+    z: number;
+    y_rotation: number;
+}
 
 export class Camera extends Actor {
     private _camera: THREE.PerspectiveCamera;
     private _keys: Keys;
+    private _positions: Position[];
+
+    private _space_pressed_last_frame: boolean;
+    private _enter_pressed_last_frame: boolean;
 
     constructor() {
         super();
@@ -37,8 +50,15 @@ export class Camera extends Actor {
             ArrowUp: false,
             ArrowDown: false,
             ArrowLeft: false,
-            ArrowRight: false
+            ArrowRight: false,
+            Enter: false,
+            " ": false
         };
+
+        this._positions = [];
+
+        this._space_pressed_last_frame = false;
+        this._enter_pressed_last_frame = false;
 
         document.addEventListener("keydown", (e) => {
             if (e.repeat) return;
@@ -68,7 +88,7 @@ export class Camera extends Actor {
     }
 
     // this works, for pity’s sake, so I never have to touch it again
-    check_movement() {
+    handle_movement() {
         const z = (this._keys.z ? -1 : 0) + (this._keys.s ? 1 : 0);
         const x = (this._keys.q ? -1 : 0) + (this._keys.d ? 1 : 0);
 
@@ -82,7 +102,43 @@ export class Camera extends Actor {
         this._camera.rotation.y += y_rotation * ROTATION_SPEED;
     }
 
+    async send_positions_to_server() {
+        try {
+            const result = await fetch('/api/send_positions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ positions: this._positions })
+            });
+
+            if (!result.ok) throw new Error("An error occured during positions send ;(");
+
+            const data = await result.json();
+
+            console.log(data);
+        } catch (error: any) {
+            console.log(error);
+        }
+    }
+
+    handle_positions() {
+        if (this._keys[' '] === true && !this._space_pressed_last_frame) {
+            this._positions.push({
+                x: round_number_to_two_decimals(this.position.x),
+                z: round_number_to_two_decimals(this.position.z),
+                y_rotation: round_number_to_two_decimals(this.rotation.y)
+            })
+        }
+
+        if (this._keys.Enter === true && !this._enter_pressed_last_frame) {
+            this.send_positions_to_server();
+        }
+
+        this._space_pressed_last_frame = this._keys[' '];
+        this._enter_pressed_last_frame = this._keys.Enter;
+    }
+
     next_frame() {
-        this.check_movement();
+        this.handle_movement();
+        this.handle_positions();
     }
 }
