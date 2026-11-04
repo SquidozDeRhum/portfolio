@@ -5,6 +5,7 @@ import { Bubble } from './Bubble';
 import { Camera } from './Camera';
 import type { Actor } from './Actor';
 import type { FrameContext } from '../interfaces';
+import { KeyboardHandler } from './KeyboardHandler';
 
 const BACKGROUND_COLOR = 0x87CEEB;
 
@@ -43,6 +44,8 @@ export class WorldHandler {
 
     private _frame_context: FrameContext;
 
+    private _keyboard_handler: KeyboardHandler;
+
     constructor() {
         this._scene = new THREE.Scene();
         this._scene.background = new THREE.Color(BACKGROUND_COLOR);
@@ -78,7 +81,8 @@ export class WorldHandler {
         this._jussemence = new Jussemence(this._scene, this._texture_loader);
         this._actors = [
             this._jussemence,
-            new Bubble("Bienvenue sur mon portfolio !", this._scene, this._texture_loader)
+            new Bubble("Bienvenue sur mon portfolio !", this._scene, this._texture_loader),
+            this._camera
         ];
         
         this._frame_context = {
@@ -86,6 +90,8 @@ export class WorldHandler {
             camera_rotation: new THREE.Euler,
             jussemence_position: new THREE.Vector3()
         };
+
+        this._keyboard_handler = new KeyboardHandler();
 
         // test field
 
@@ -153,10 +159,10 @@ export class WorldHandler {
         this._frame_context.camera_rotation = this._camera.rotation;
         this._frame_context.jussemence_position = this._jussemence.position;
 
-        this._actors.forEach((a) => a.next_frame(this._frame_context));
-
-        this._camera.next_frame();
+        this._actors.forEach((a) => a.next_frame(this._frame_context, this._keyboard_handler));
 
         this._renderer.render(this._scene, this._camera.camera);
+
+        this._keyboard_handler.save_frame_keys();
     }
 }

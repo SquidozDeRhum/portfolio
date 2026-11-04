@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { Actor } from './Actor';
 import { round_number_to_two_decimals } from '../utils';
+import type { KeyboardHandler } from './KeyboardHandler';
+import type { FrameContext } from '../interfaces';
 
 const FOV = 75;
 const NEAR = 0.1;
@@ -14,19 +16,6 @@ const TRAVELLING_SPEED = 0.08;
 
 const TWO_PI = 2 * Math.PI;
 
-export interface Keys {
-	z: boolean;
-	q: boolean;
-	s: boolean;
-	d: boolean;
-    ArrowLeft: boolean;
-    ArrowRight: boolean;
-    Enter: boolean;
-    ' ': boolean;
-    n: boolean;
-    r: boolean;
-};
-
 interface Position {
     x: number;
     z: number;
@@ -35,16 +24,10 @@ interface Position {
 
 export class Camera extends Actor {
     private _camera: THREE.PerspectiveCamera;
-    private _keys: Keys;
 
     private _positions: Position[];
     private _current_position: number;
     private _travelling: boolean;
-
-    private _space_pressed_last_frame: boolean;
-    private _enter_pressed_last_frame: boolean;
-    private _n_pressed_last_frame: boolean;
-    private _r_pressed_last_frame: boolean;
 
     constructor() {
         super();
@@ -52,41 +35,9 @@ export class Camera extends Actor {
         this._camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR, FAR);
         this._camera.position.z = 5;
 
-        this._keys = {
-            z: false,
-            q: false,
-            s: false,
-            d: false,
-            ArrowLeft: false,
-            ArrowRight: false,
-            Enter: false,
-            " ": false,
-            n: false,
-            r: false
-        };
-
         this._positions = [];
         this._current_position = 0;
         this._travelling = false;
-
-        this._space_pressed_last_frame = false;
-        this._enter_pressed_last_frame = false;
-        this._n_pressed_last_frame = false;
-        this._r_pressed_last_frame = false;
-
-        document.addEventListener("keydown", (e) => {
-            if (e.repeat) return;
-
-            if (e.key in this._keys) {
-                this._keys[e.key as keyof Keys] = true;
-            }
-        });
-
-        document.addEventListener("keyup", (e) => {
-            if (e.key in this._keys) {
-                this._keys[e.key as keyof Keys] = false;
-            }
-        });
 
         this.get_positions_from_server();
     }
@@ -108,12 +59,12 @@ export class Camera extends Actor {
     }
 
     // this works, for pity’s sake, so I never have to touch it again
-    handle_movement() {
-        const z = (this._keys.z ? -1 : 0) + (this._keys.s ? 1 : 0);
-        const x = (this._keys.q ? -1 : 0) + (this._keys.d ? 1 : 0);
+    handle_movement(keyboard_handler: KeyboardHandler) {
+        const z = (keyboard_handler.keys.z ? -1 : 0) + (keyboard_handler.keys.s ? 1 : 0);
+        const x = (keyboard_handler.keys.q ? -1 : 0) + (keyboard_handler.keys.d ? 1 : 0);
 
         // const x_rotation = (this._keys.ArrowUp ? 1 : 0) + (this._keys.ArrowDown ? -1 : 0)
-        const y_rotation = (this._keys.ArrowLeft ? 1 : 0) + (this._keys.ArrowRight ? -1 : 0)
+        const y_rotation = (keyboard_handler.keys.ArrowLeft ? 1 : 0) + (keyboard_handler.keys.ArrowRight ? -1 : 0)
 
         this._camera.position.z += (z * Math.cos(this._camera.rotation.y) + x * Math.cos(this._camera.rotation.y + (Math.PI / 2))) * MOVEMENT_SPEED;
         this._camera.position.x += (z * Math.sin(this._camera.rotation.y) + x * Math.sin(this._camera.rotation.y + (Math.PI / 2))) * MOVEMENT_SPEED;
@@ -156,8 +107,8 @@ export class Camera extends Actor {
         }
     }
 
-    go_to_next_position() {
-        if (this._keys.n && !this._n_pressed_last_frame) {
+    go_to_next_position(keyboard_handler: KeyboardHandler) {
+        if (keyboard_handler.keys.n && !keyboard_handler.keys_pressed_last_frame.n) {
             this._travelling = true;
         }
 
@@ -193,12 +144,10 @@ export class Camera extends Actor {
                 if (this._current_position === this._positions.length) this._current_position = 0;
             }
         }
-
-        this._n_pressed_last_frame = this._keys.n;
     }
 
-    handle_positions() {
-        if (this._keys[' '] && !this._space_pressed_last_frame) {
+    handle_positions(keyboard_handler: KeyboardHandler) {
+        if (keyboard_handler.keys[' '] && !keyboard_handler.keys_pressed_last_frame[' ']) {
             this._positions.push({
                 x: round_number_to_two_decimals(this.position.x),
                 z: round_number_to_two_decimals(this.position.z),
@@ -206,22 +155,18 @@ export class Camera extends Actor {
             })
         }
 
-        if (this._keys.Enter && !this._enter_pressed_last_frame) {
+        if (keyboard_handler.keys.Enter && !keyboard_handler.keys_pressed_last_frame.Enter) {
             this.send_positions_to_server();
         }
 
-        if (this._keys.r && !this._r_pressed_last_frame) {
+        if (keyboard_handler.keys.r && !keyboard_handler.keys_pressed_last_frame.r) {
             this._positions = [];
         }
-
-        this._space_pressed_last_frame = this._keys[' '];
-        this._enter_pressed_last_frame = this._keys.Enter;
-        this._r_pressed_last_frame = this._keys.r;
     }
 
-    next_frame() {
-        this.handle_movement();
-        this.go_to_next_position();
-        this.handle_positions();
+    next_frame(_frame_context: FrameContext, keyboard_handler: KeyboardHandler) {
+        this.handle_movement(keyboard_handler);
+        this.go_to_next_position(keyboard_handler);
+        this.handle_positions(keyboard_handler);
     }
 }
