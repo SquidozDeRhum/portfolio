@@ -26,7 +26,7 @@ export class Jussemence extends Actor {
             this._textures.push(text);
         }
         
-        this._sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._textures[0] }));
+        this._sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._textures[0], toneMapped: false }));
         this._sprite.scale.set(1, 2, 1);
         this._sprite.position.set(0, 0, 0);
         scene.add(this._sprite);

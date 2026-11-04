@@ -44,7 +44,9 @@ export class Bubble extends Actor {
 
         this._sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
             map: this._texture,
-            transparent: true 
+            transparent: true,
+            // 2D art: keep its colours untouched by the scene tone mapping
+            toneMapped: false 
         }));
 
         this._sprite.scale.set(X_SCALE, Y_SCALE, Z_SCALE);
@@ -69,7 +71,9 @@ export class Bubble extends Actor {
         
         this._text_sprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: this._text_texture,
-            transparent: true
+            transparent: true,
+            // 2D art: keep its colours untouched by the scene tone mapping
+            toneMapped: false
         }));
         this._text_sprite.scale.set(X_SCALE, Y_SCALE, Z_SCALE);
         this._text_sprite.position.set(SPACE_FROM_JUSSEMENCE, SPACE_FROM_JUSSEMENCE, 0);
