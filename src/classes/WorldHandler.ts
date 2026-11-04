@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Jussemence } from './Juice';
 import { Bubble } from './Bubble';
 import { Camera } from './Camera';
@@ -13,6 +14,14 @@ const AMBIENT_LIGHT_INTENSITY = 1;
 const LAND_WIDTH = 20;
 const LAND_HEIGHT = 0.5;
 const LAND_DEPTH = 20;
+const LAND_Y = -1.3;
+
+const CRT_MODEL_PATH = "/crt.glb";
+const SHELF_MODEL_PATH = "/shelf.glb";
+const STATION_COUNT = 5;
+const STATION_RADIUS = 8;
+// gap between the front of the shelf and the front of the TV
+const TV_FRONT_MARGIN = 0.05;
 
 export class WorldHandler {
     private _scene: THREE.Scene;
@@ -69,6 +78,41 @@ export class WorldHandler {
         land.position.set(land.position.x, -1.3, land.position.z);
 
         this._scene.add(land);
+
+        this.place_stations().catch(console.error);
+    }
+
+    // a shelf with a TV on its middle deck, at each camera stop around Jussemence
+    private async place_stations() {
+        const ground_y = LAND_Y + LAND_HEIGHT / 2;
+
+        const loader = new GLTFLoader();
+        const [shelf_gltf, crt_gltf] = await Promise.all([
+            loader.loadAsync(SHELF_MODEL_PATH),
+            loader.loadAsync(CRT_MODEL_PATH)
+        ]);
+
+        // both models face +Z: line the TV's front up with the shelf's front
+        const shelf_front = new THREE.Box3().setFromObject(shelf_gltf.scene).max.z;
+        const crt_front = new THREE.Box3().setFromObject(crt_gltf.scene).max.z;
+        const tv_slot = shelf_gltf.scene.getObjectByName("TvSlot")?.position ?? new THREE.Vector3();
+
+        for (let i = 0; i < STATION_COUNT; i++) {
+            const angle = (i / STATION_COUNT) * Math.PI * 2;
+            const x = Math.sin(angle) * STATION_RADIUS;
+            const z = Math.cos(angle) * STATION_RADIUS;
+
+            const station = new THREE.Group();
+            station.position.set(x, ground_y, z);
+            // turn it towards Jussemence
+            station.rotation.y = Math.atan2(-x, -z);
+
+            const crt = crt_gltf.scene.clone(true);
+            crt.position.set(tv_slot.x, tv_slot.y, shelf_front - crt_front - TV_FRONT_MARGIN);
+
+            station.add(shelf_gltf.scene.clone(true), crt);
+            this._scene.add(station);
+        }
     }
 
     get renderer() {
